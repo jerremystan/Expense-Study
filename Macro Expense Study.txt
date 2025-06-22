@@ -1,0 +1,935 @@
+Private Const ExpenseSummary = "C:\Stanley\Tugas IFRS17\Macro for Expense Study\03. Summary Opex 2024-Q4 YTD 3rd cut.xlsx"
+Private Const MoveExpense = False
+
+Private Const Sheet03 = True
+Private Const Sheet07 = False
+Private Const Sheet09 = False
+
+Sub Expense()
+    
+    Dim ws As Worksheet
+    Dim wb As Workbook
+    
+    Dim wst As Worksheet
+    Dim wbt As Workbook
+    
+    Dim wss As Worksheet
+    Dim wbs As Workbook
+    
+    Dim wsn As Worksheet
+    Dim wbn As Workbook
+    
+    Dim lastrowt As Single
+    Dim lastcolt As Single
+    
+    Dim ACEForm1 As String
+    Dim PMEForm1 As String
+    Dim CHEForm1 As String
+    Dim ACEForm2 As String
+    Dim PMEForm2 As String
+    Dim CHEForm2 As String
+    Dim ACEFormTemp As String
+    Dim PMEFormTemp As String
+    Dim CHEFormTemp As String
+    
+    Dim FirstChar As Single
+    Dim LastChar As Single
+    
+    Dim lastrows As Single
+    Dim lastcols As Single
+    Dim lastrowtprior As Single
+    Dim lastrown As Single
+    
+    
+    Set wb = Workbooks.Open(ExpenseSummary, UpdateLinks:=0)
+    Set ws = wb.Sheets("Summary")
+    
+    
+    If MoveExpense Then
+        Set wst = ThisWorkbook.Sheets("Summary")
+        lastrowt = wst.Cells(Rows.Count, "B").End(xlUp).Row
+    
+        wst.Columns("A:K").ClearContents
+        wst.Range("L3:S1048576").ClearContents
+        
+        ws.Columns("A:K").Select
+        Selection.Copy
+        
+        wst.Range("A:K").PasteSpecial xlPasteAll
+        wst.Range("L2:S2").Copy
+        lastrowt = wst.Cells(Rows.Count, "B").End(xlUp).Row
+        wst.Range("L3:S" & lastrowt).PasteSpecial xlPasteFormulas
+        wst.Range("L3:S" & lastrowt).Copy
+        wst.Range("L3:S" & lastrowt).PasteSpecial Paste:=xlPasteValues
+    End If
+    
+    '03. Expense Study
+    If Sheet03 Then
+    Set wst = ThisWorkbook.Sheets("03. Expense Study")
+    Set wss = ThisWorkbook.Sheets("01. GEP Non CA")
+    
+    lastrows = wss.Cells(Rows.Count, "A").End(xlUp).Row
+    lastcols = wss.Cells(1, wss.Columns.Count).End(xlToLeft).Column
+    wss.Range("I2").Copy
+    wss.Range("I3:I" & lastrows).PasteSpecial xlPasteFormulas
+    wss.Range("I3:I" & lastrows).Copy
+    wss.Range("I3:I" & lastrows).PasteSpecial xlPasteValues
+    wss.Range(wss.Cells(1, 1), wss.Cells(lastrows, lastcols)).AutoFilter Field:=lastcols, Criteria1:=0
+
+    Set wbn = Workbooks.Add
+    
+    wbn.Sheets(1).Name = "03 Expense Study"
+    Set wsn = wbn.Sheets("03 Expense Study")
+    
+    wss.Range(wss.Cells(1, 1), wss.Cells(lastrows, lastcols)).SpecialCells(xlCellTypeVisible).Copy
+    wsn.Range("A1").PasteSpecial Paste:=xlPasteValues
+    
+'    For i = 1 To lastcols
+'        arr(i) = i
+'    Next i
+    
+    wsn.Columns("F:I").Clear
+    wsn.UsedRange.RemoveDuplicates Columns:=Array(1, 2, 3, 4, 5), Header:=xlYes
+    lastrown = wsn.Cells(Rows.Count, "A").End(xlUp).Row
+    
+    lastrowt = wst.Cells(Rows.Count, "A").End(xlUp).Row
+    wst.Range("K3:K" & lastrowt).Value = 0
+    
+    wsn.Range("A2:E" & lastrown).Copy
+    wst.Range("A" & (lastrowt + 1)).PasteSpecial xlPasteValues
+    wst.Range("K" & (lastrowt + 1) & ":K" & wst.Cells(Rows.Count, "A").End(xlUp).Row).Value = 1
+    wst.Range("A" & (lastrowt + 1) & ":K" & wst.Cells(Rows.Count, "A").End(xlUp).Row).Interior.Color = RGB(192, 192, 192)
+    
+    lastrowt = wst.Cells(Rows.Count, "A").End(xlUp).Row
+    wst.Range("F2:J2").Copy
+    wst.Range("F3:J" & lastrowt).PasteSpecial xlPasteFormulas
+    
+    For i = 2 To lastrowt
+        
+        If wst.Cells(i, 9).Value = 0 And (wst.Cells(i, 6).Value + wst.Cells(i, 7).Value) <> 0 Then 'Awal If GEP
+            
+            If wst.Cells(i, 6).Value <> 0 And wst.Cells(i, 7).Value = 0 Then 'Ada ACE
+                For j = 2 To lastrowt
+                    If j <> lastrowt Then
+                        If wst.Cells(j, 6).Value <> 0 And wst.Cells(i, 3).Value = wst.Cells(j, 3).Value And wst.Cells(i, 4).Value = wst.Cells(j, 4).Value And wst.Cells(j, 9).Value <> 0 Then
+                            ACEForm1 = wst.Cells(j, 6).Formula
+                            ACEForm2 = wst.Cells(i, 6).Formula
+                            ACEFormTemp = ACEForm1 & " + " & Mid(ACEForm2, 2, Len(ACEForm2))
+                            wst.Cells(j, 6).Formula = ACEFormTemp
+                            wst.Cells(i, 6).Formula = ACEForm2 & "*0"
+                            
+                            wst.Cells(j, 11).Value = 1
+                            wst.Cells(i, 11).Value = 1
+                            
+                            Exit For
+                        End If
+                    ElseIf j = lastrowt Then
+                        For k = 2 To lastrowt
+                            If k <> lastrowt Then
+                                If wst.Cells(k, 6).Value <> 0 And wst.Cells(i, 3).Value = wst.Cells(k, 3).Value And wst.Cells(k, 9).Value <> 0 Then
+                                    ACEForm1 = wst.Cells(k, 6).Formula
+                                    ACEForm2 = wst.Cells(i, 6).Formula
+                                    ACEFormTemp = ACEForm1 & " + " & Mid(ACEForm2, 2, Len(ACEForm2))
+                                    wst.Cells(k, 6).Formula = ACEFormTemp
+                                    wst.Cells(i, 6).Formula = ACEForm2 & "*0"
+                                    
+                                    wst.Cells(k, 11).Value = 1
+                                    wst.Cells(i, 11).Value = 1
+                                    
+                                    Exit For
+                                End If
+                            ElseIf k = lastrowt Then
+                                For l = 2 To lastrowt
+                                    If wst.Cells(l, 6).Value <> 0 And wst.Cells(l, 9).Value <> 0 Then
+                                        ACEForm1 = wst.Cells(l, 6).Formula
+                                        ACEForm2 = wst.Cells(i, 6).Formula
+                                        ACEFormTemp = ACEForm1 & " + " & Mid(ACEForm2, 2, Len(ACEForm2))
+                                        wst.Cells(l, 6).Formula = ACEFormTemp
+                                        wst.Cells(i, 6).Formula = ACEForm2 & "*0"
+                                        
+                                        wst.Cells(l, 11).Value = 1
+                                        wst.Cells(i, 11).Value = 1
+                                        
+                                        Exit For
+                                    End If
+                                Next l
+                            End If
+                        Next k
+                    End If
+                Next j
+                
+            
+            ElseIf wst.Cells(i, 6).Value = 0 And wst.Cells(i, 7).Value <> 0 Then 'Ada PME
+                For j = 2 To lastrowt
+                    If j <> lastrowt Then
+                        If wst.Cells(j, 7).Value <> 0 And wst.Cells(i, 3).Value = wst.Cells(j, 3).Value And wst.Cells(i, 4).Value = wst.Cells(j, 4).Value And wst.Cells(j, 9).Value <> 0 Then
+                            PMEForm1 = wst.Cells(j, 7).Formula
+                            PMEForm2 = wst.Cells(i, 7).Formula
+                            PMEFormTemp = PMEForm1 & " + " & Mid(PMEForm2, 2, Len(PMEForm2))
+                            wst.Cells(j, 7).Formula = PMEFormTemp
+                            wst.Cells(i, 7).Formula = PMEForm2 & "*0"
+                            
+                            wst.Cells(j, 11).Value = 1
+                            wst.Cells(i, 11).Value = 1
+                            
+                            Exit For
+                        End If
+                    ElseIf j = lastrowt Then
+                        For k = 2 To lastrowt
+                            If k <> lastrowt Then
+                                If wst.Cells(k, 7).Value <> 0 And wst.Cells(i, 3).Value = wst.Cells(k, 3).Value And wst.Cells(k, 9).Value <> 0 Then
+                                    PMEForm1 = wst.Cells(k, 7).Formula
+                                    PMEForm2 = wst.Cells(i, 7).Formula
+                                    PMEFormTemp = PMEForm1 & " + " & Mid(PMEForm2, 2, Len(PMEForm2))
+                                    wst.Cells(k, 7).Formula = PMEFormTemp
+                                    wst.Cells(i, 7).Formula = PMEForm2 & "*0"
+                                    
+                                    wst.Cells(k, 11).Value = 1
+                                    wst.Cells(i, 11).Value = 1
+                                    
+                                    Exit For
+                                End If
+                            ElseIf k = lastrowt Then
+                                For l = 2 To lastrowt
+                                    If wst.Cells(l, 7).Value <> 0 And wst.Cells(l, 9).Value <> 0 Then
+                                        PMEForm1 = wst.Cells(l, 7).Formula
+                                        PMEForm2 = wst.Cells(i, 7).Formula
+                                        PMEFormTemp = PMEForm1 & " + " & Mid(PMEForm2, 2, Len(PMEForm2))
+                                        wst.Cells(l, 7).Formula = PMEFormTemp
+                                        wst.Cells(i, 7).Formula = PMEForm2 & "*0"
+                                        
+                                        wst.Cells(l, 11).Value = 1
+                                        wst.Cells(i, 11).Value = 1
+                                        
+                                        Exit For
+                                    End If
+                                Next l
+                            End If
+                        Next k
+                    End If
+                Next j
+                
+            ElseIf wst.Cells(i, 6).Value <> 0 And wst.Cells(i, 7).Value <> 0 Then 'Ada ACE dan PME
+                For j = 2 To lastrowt
+                    If j <> lastrowt Then
+                        If wst.Cells(j, 6).Value <> 0 And wst.Cells(j, 7).Value <> 0 And wst.Cells(i, 3).Value = wst.Cells(j, 3).Value And wst.Cells(i, 4).Value = wst.Cells(j, 4).Value And wst.Cells(j, 9).Value <> 0 Then
+                            ACEForm1 = wst.Cells(j, 6).Formula
+                            ACEForm2 = wst.Cells(i, 6).Formula
+                            ACEFormTemp = ACEForm1 & " + " & Mid(ACEForm2, 2, Len(ACEForm2))
+                            wst.Cells(j, 6).Formula = ACEFormTemp
+                            wst.Cells(i, 6).Formula = ACEForm2 & "*0"
+                            
+                            PMEForm1 = wst.Cells(j, 7).Formula
+                            PMEForm2 = wst.Cells(i, 7).Formula
+                            PMEFormTemp = PMEForm1 & " + " & Mid(PMEForm2, 2, Len(PMEForm2))
+                            wst.Cells(j, 7).Formula = PMEFormTemp
+                            wst.Cells(i, 7).Formula = PMEForm2 & "*0"
+                            
+                            wst.Cells(j, 11).Value = 1
+                            wst.Cells(i, 11).Value = 1
+                            
+                            Exit For
+                        End If
+                    ElseIf j = lastrowt Then
+                        For k = 2 To lastrowt
+                            If k <> lastrowt Then
+                                If wst.Cells(k, 6).Value <> 0 And wst.Cells(k, 7).Value <> 0 And wst.Cells(i, 3).Value = wst.Cells(k, 3).Value And wst.Cells(k, 9).Value <> 0 Then
+                                    ACEForm1 = wst.Cells(k, 6).Formula
+                                    ACEForm2 = wst.Cells(i, 6).Formula
+                                    ACEFormTemp = ACEForm1 & " + " & Mid(ACEForm2, 2, Len(ACEForm2))
+                                    wst.Cells(k, 6).Formula = ACEFormTemp
+                                    wst.Cells(i, 6).Formula = ACEForm2 & "*0"
+                                    
+                                    PMEForm1 = wst.Cells(k, 7).Formula
+                                    PMEForm2 = wst.Cells(i, 7).Formula
+                                    PMEFormTemp = PMEForm1 & " + " & Mid(PMEForm2, 2, Len(PMEForm2))
+                                    wst.Cells(k, 7).Formula = PMEFormTemp
+                                    wst.Cells(i, 7).Formula = PMEForm2 & "*0"
+                                    
+                                    wst.Cells(k, 11).Value = 1
+                                    wst.Cells(i, 11).Value = 1
+                                    
+                                    Exit For
+                                End If
+                            ElseIf k = lastrowt Then
+                                For l = 2 To lastrowt
+                                    If wst.Cells(l, 6).Value <> 0 And wst.Cells(l, 7).Value <> 0 And wst.Cells(l, 9).Value <> 0 Then
+                                        ACEForm1 = wst.Cells(l, 6).Formula
+                                        ACEForm2 = wst.Cells(i, 6).Formula
+                                        ACEFormTemp = ACEForm1 & " + " & Mid(ACEForm2, 2, Len(ACEForm2))
+                                        wst.Cells(l, 6).Formula = ACEFormTemp
+                                        wst.Cells(i, 6).Formula = ACEForm2 & "*0"
+                                        
+                                        PMEForm1 = wst.Cells(l, 7).Formula
+                                        PMEForm2 = wst.Cells(i, 7).Formula
+                                        PMEFormTemp = PMEForm1 & " + " & Mid(PMEForm2, 2, Len(PMEForm2))
+                                        wst.Cells(l, 7).Formula = PMEFormTemp
+                                        wst.Cells(i, 7).Formula = PMEForm2 & "*0"
+                                        
+                                        wst.Cells(l, 11).Value = 1
+                                        wst.Cells(i, 11).Value = 1
+                                        
+                                        Exit For
+                                    End If
+                                Next l
+                            End If
+                        Next k
+                    End If
+                Next j
+            End If
+        
+        End If 'End If GEP
+        
+        If wst.Cells(i, 10).Value = 0 And wst.Cells(i, 8).Value <> 0 Then 'If GIC
+            For j = 2 To lastrowt
+                If j <> lastrowt Then
+                    If wst.Cells(j, 8).Value <> 0 And wst.Cells(i, 3).Value = wst.Cells(j, 3).Value And wst.Cells(i, 4).Value = wst.Cells(j, 4).Value And wst.Cells(j, 10).Value <> 0 Then
+                        CHEForm1 = wst.Cells(j, 8).Formula
+                        CHEForm2 = wst.Cells(i, 8).Formula
+                        CHEFormTemp = CHEForm1 & " + " & Mid(CHEForm2, 2, Len(CHEForm2))
+                        wst.Cells(j, 8).Formula = CHEFormTemp
+                        wst.Cells(i, 8).Formula = CHEForm2 & "*0"
+                        
+                        wst.Cells(j, 11).Value = 1
+                        wst.Cells(i, 11).Value = 1
+                        
+                        Exit For
+                    End If
+                ElseIf j = lastrowt Then
+                    For k = 2 To lastrowt
+                        If k <> lastrowt Then
+                            If wst.Cells(k, 8).Value <> 0 And wst.Cells(i, 3).Value = wst.Cells(k, 3).Value And wst.Cells(k, 10).Value <> 0 Then
+                                CHEForm1 = wst.Cells(k, 8).Formula
+                                CHEForm2 = wst.Cells(i, 8).Formula
+                                CHEFormTemp = CHEForm1 & " + " & Mid(CHEForm2, 2, Len(CHEForm2))
+                                wst.Cells(k, 8).Formula = CHEFormTemp
+                                wst.Cells(i, 8).Formula = CHEForm2 & "*0"
+                                
+                                wst.Cells(k, 11).Value = 1
+                                wst.Cells(i, 11).Value = 1
+                                
+                                Exit For
+                            End If
+                        ElseIf k = lastrowt Then
+                            For l = 2 To lastrowt
+                                If wst.Cells(l, 8).Value <> 0 And wst.Cells(l, 10).Value <> 0 Then
+                                    CHEForm1 = wst.Cells(l, 8).Formula
+                                    CHEForm2 = wst.Cells(i, 8).Formula
+                                    CHEFormTemp = CHEForm1 & " + " & Mid(CHEForm2, 2, Len(CHEForm2))
+                                    wst.Cells(l, 8).Formula = CHEFormTemp
+                                    wst.Cells(i, 8).Formula = CHEForm2 & "*0"
+                                    
+                                    wst.Cells(l, 11).Value = 1
+                                    wst.Cells(i, 11).Value = 1
+                                    
+                                    Exit For
+                                End If
+                            Next l
+                        End If
+                    Next k
+                End If
+            Next j
+        End If 'End If GIC
+        
+    Next i
+    End If
+    '04. Expected Expenses
+    
+    Set wst = ThisWorkbook.Sheets("04. Expected Expense")
+    lastrowt = wst.Cells(Rows.Count, "A").End(xlUp).Row
+    lastcolt = wst.Cells(1, wst.Columns.Count).End(xlToLeft).Column
+    
+    wst.Range("E2:L2").Copy
+    wst.Range("E3:L" & lastrowt).PasteSpecial xlPasteFormulas
+    
+    '07. GEP Non CA
+    If Sheet07 Then
+    Set wst = ThisWorkbook.Sheets("07. GEP Non CA")
+    Set wss = ThisWorkbook.Sheets("Summary")
+    
+    Set wbn = Workbooks.Add
+    Set wsn = wbn.Sheets.Add
+    wsn.Name = "07. GEP Non CA"
+    
+    lastrowt = wst.Cells(Rows.Count, "A").End(xlUp).Row
+    lastrowtprior = lastrowt
+    MsgBox lastrowtprior
+    wst.Range("H2:L2").Copy
+    wst.Range("H3:L" & lastrowt).PasteSpecial xlPasteFormulas
+    
+    
+    For i = 2 To lastrowt
+        
+        If wst.Cells(i, 8).Value = 0 And (wst.Cells(i, 9).Value + wst.Cells(i, 10).Value) <> 0 Then 'Awal If GEP
+            
+            If (wst.Cells(i, 10).Value) <> 0 And wst.Cells(i, 9).Value = 0 Then 'Ada ACE
+                For j = 2 To lastrowt
+                    If j <> lastrowt Then
+                        If (wst.Cells(j, 10).Value) <> 0 And wst.Cells(i, 4).Value = wst.Cells(j, 4).Value And wst.Cells(i, 5).Value = wst.Cells(j, 5).Value And wst.Cells(j, 8).Value <> 0 Then
+                            ACEForm1 = wst.Cells(j, 10).Formula
+                            ACEForm2 = wst.Cells(i, 10).Formula
+                            LastChar = InStr(1, ACEForm2, ")*G", vbTextCompare)
+                            ACEFormTemp = ACEForm1 & " + " & Mid(ACEForm2, InStr(1, ACEForm2, "(") + 1, LastChar - InStr(1, ACEForm2, "("))
+                            wst.Cells(j, 10).Formula = ACEFormTemp
+                            wst.Cells(i, 10).Formula = ACEForm2 & "*0"
+                            
+                            wst.Cells(j, 13).Value = 1
+                            wst.Cells(i, 13).Value = 1
+                            
+                            Exit For
+                        End If
+                    ElseIf j = lastrowt Then
+                        For k = 2 To lastrowt
+                            If k <> lastrowt Then
+                                If (wst.Cells(k, 10).Value) <> 0 And wst.Cells(i, 4).Value = wst.Cells(k, 4).Value And wst.Cells(k, 8).Value <> 0 Then
+                                    ACEForm1 = wst.Cells(k, 10).Formula
+                                    ACEForm2 = wst.Cells(i, 10).Formula
+                                    LastChar = InStr(1, ACEForm2, ")*G", vbTextCompare)
+                                    ACEFormTemp = ACEForm1 & " + " & Mid(ACEForm2, InStr(1, ACEForm2, "(") + 1, LastChar - InStr(1, ACEForm2, "("))
+                                    wst.Cells(k, 10).Formula = ACEFormTemp
+                                    wst.Cells(i, 10).Formula = ACEForm2 & "*0"
+                                    
+                                    wst.Cells(k, 13).Value = 1
+                                    wst.Cells(i, 13).Value = 1
+                                    
+                                    Exit For
+                                End If
+                            ElseIf k = lastrowt Then
+                                For l = 2 To lastrowt
+                                    If (wst.Cells(l, 10).Value) <> 0 And wst.Cells(l, 8).Value <> 0 Then
+                                        ACEForm1 = wst.Cells(l, 10).Formula
+                                        ACEForm2 = wst.Cells(i, 10).Formula
+                                        LastChar = InStr(1, ACEForm2, ")*G", vbTextCompare)
+                                        ACEFormTemp = ACEForm1 & " + " & Mid(ACEForm2, InStr(1, ACEForm2, "(") + 1, LastChar - InStr(1, ACEForm2, "("))
+                                        wst.Cells(l, 10).Formula = ACEFormTemp
+                                        wst.Cells(i, 10).Formula = ACEForm2 & "*0"
+                                        
+                                        wst.Cells(l, 13).Value = 1
+                                        wst.Cells(i, 13).Value = 1
+                                        
+                                        Exit For
+                                    End If
+                                Next l
+                            End If
+                        Next k
+                    End If
+                Next j
+                
+            
+            ElseIf (wst.Cells(i, 10).Value) = 0 And wst.Cells(i, 9).Value <> 0 Then 'Ada PME
+                For j = 2 To lastrowt
+                    If j <> lastrowt Then
+                        If wst.Cells(j, 9).Value <> 0 And wst.Cells(i, 4).Value = wst.Cells(j, 4).Value And wst.Cells(i, 5).Value = wst.Cells(j, 5).Value And wst.Cells(j, 8).Value <> 0 Then
+                            PMEForm1 = wst.Cells(j, 9).Formula
+                            PMEForm2 = wst.Cells(i, 9).Formula
+                            LastChar = InStr(1, PMEForm2, ")*G", vbTextCompare)
+                            PMEFormTemp = PMEForm1 & " + " & Mid(PMEForm2, InStr(1, PMEForm2, "(") + 1, LastChar - InStr(1, PMEForm2, "("))
+                            wst.Cells(j, 9).Formula = PMEFormTemp
+                            wst.Cells(i, 9).Formula = PMEForm2 & "*0"
+                            
+                            wst.Cells(j, 13).Value = 1
+                            wst.Cells(i, 13).Value = 1
+                            
+                            Exit For
+                        End If
+                    ElseIf j = lastrowt Then
+                        For k = 2 To lastrowt
+                            If k <> lastrowt Then
+                                If wst.Cells(k, 9).Value <> 0 And wst.Cells(i, 4).Value = wst.Cells(k, 4).Value And wst.Cells(k, 8).Value <> 0 Then
+                                    PMEForm1 = wst.Cells(k, 9).Formula
+                                    PMEForm2 = wst.Cells(i, 9).Formula
+                                    LastChar = InStr(1, PMEForm2, ")*G", vbTextCompare)
+                                    PMEFormTemp = PMEForm1 & " + " & Mid(PMEForm2, InStr(1, PMEForm2, "(") + 1, LastChar - InStr(1, PMEForm2, "("))
+                                    wst.Cells(k, 9).Formula = PMEFormTemp
+                                    wst.Cells(i, 9).Formula = PMEForm2 & "*0"
+                                    
+                                    wst.Cells(k, 13).Value = 1
+                                    wst.Cells(i, 13).Value = 1
+                                    
+                                    Exit For
+                                End If
+                            ElseIf k = lastrowt Then
+                                For l = 2 To lastrowt
+                                    If wst.Cells(l, 9).Value <> 0 And wst.Cells(l, 8).Value <> 0 Then
+                                        PMEForm1 = wst.Cells(l, 9).Formula
+                                        PMEForm2 = wst.Cells(i, 9).Formula
+                                        LastChar = InStr(1, PMEForm2, ")*G", vbTextCompare)
+                                        PMEFormTemp = PMEForm1 & " + " & Mid(PMEForm2, InStr(1, PMEForm2, "(") + 1, LastChar - InStr(1, PMEForm2, "("))
+                                        wst.Cells(l, 9).Formula = PMEFormTemp
+                                        wst.Cells(i, 9).Formula = PMEForm2 & "*0"
+                                        
+                                        wst.Cells(l, 13).Value = 1
+                                        wst.Cells(i, 13).Value = 1
+                                        
+                                        Exit For
+                                    End If
+                                Next l
+                            End If
+                        Next k
+                    End If
+                Next j
+                
+            ElseIf (wst.Cells(i, 10).Value) <> 0 And wst.Cells(i, 9).Value <> 0 Then 'Ada ACE dan PME
+                For j = 2 To lastrowt
+                    If j <> lastrowt Then
+                        If (wst.Cells(j, 10).Value) <> 0 And wst.Cells(j, 9).Value <> 0 And wst.Cells(i, 4).Value = wst.Cells(j, 4).Value And wst.Cells(i, 5).Value = wst.Cells(j, 5).Value And wst.Cells(j, 8).Value <> 0 Then
+                            ACEForm1 = wst.Cells(j, 10).Formula
+                            ACEForm2 = wst.Cells(i, 10).Formula
+                            LastChar = InStr(1, ACEForm2, ")*G", vbTextCompare)
+                            ACEFormTemp = ACEForm1 & " + " & Mid(ACEForm2, InStr(1, ACEForm2, "(") + 1, LastChar - InStr(1, ACEForm2, "("))
+                            wst.Cells(j, 10).Formula = ACEFormTemp
+                            wst.Cells(i, 10).Formula = ACEForm2 & "*0"
+                            
+                            PMEForm1 = wst.Cells(j, 9).Formula
+                            PMEForm2 = wst.Cells(i, 9).Formula
+                            LastChar = InStr(1, PMEForm2, ")*G", vbTextCompare)
+                            PMEFormTemp = PMEForm1 & " + " & Mid(PMEForm2, InStr(1, PMEForm2, "(") + 1, LastChar - InStr(1, PMEForm2, "("))
+                            wst.Cells(j, 9).Formula = PMEFormTemp
+                            wst.Cells(i, 9).Formula = PMEForm2 & "*0"
+                            
+                            wst.Cells(j, 13).Value = 1
+                            wst.Cells(i, 13).Value = 1
+                            
+                            Exit For
+                        End If
+                    ElseIf j = lastrowt Then
+                        For k = 2 To lastrowt
+                            If k <> lastrowt Then
+                                If (wst.Cells(k, 10).Value) <> 0 And wst.Cells(k, 9).Value <> 0 And wst.Cells(i, 4).Value = wst.Cells(k, 4).Value And wst.Cells(k, 8).Value <> 0 Then
+                                    ACEForm1 = wst.Cells(k, 10).Formula
+                                    ACEForm2 = wst.Cells(i, 10).Formula
+                                    LastChar = InStr(1, ACEForm2, ")*G", vbTextCompare)
+                                    ACEFormTemp = ACEForm1 & " + " & Mid(ACEForm2, InStr(1, ACEForm2, "(") + 1, LastChar - InStr(1, ACEForm2, "("))
+                                    wst.Cells(k, 10).Formula = ACEFormTemp
+                                    wst.Cells(i, 10).Formula = ACEForm2 & "*0"
+                                    
+                                    PMEForm1 = wst.Cells(k, 9).Formula
+                                    PMEForm2 = wst.Cells(i, 9).Formula
+                                    LastChar = InStr(1, PMEForm2, ")*G", vbTextCompare)
+                                    PMEFormTemp = PMEForm1 & " + " & Mid(PMEForm2, InStr(1, PMEForm2, "(") + 1, LastChar - InStr(1, PMEForm2, "("))
+                                    wst.Cells(k, 9).Formula = PMEFormTemp
+                                    wst.Cells(i, 9).Formula = PMEForm2 & "*0"
+                                    
+                                    wst.Cells(k, 13).Value = 1
+                                    wst.Cells(i, 13).Value = 1
+                                    
+                                    Exit For
+                                End If
+                            ElseIf k = lastrowt Then
+                                For l = 2 To lastrowt
+                                    If (wst.Cells(l, 10).Value) <> 0 And wst.Cells(l, 9).Value <> 0 And wst.Cells(l, 8).Value <> 0 Then
+                                        ACEForm1 = wst.Cells(l, 10).Formula
+                                        ACEForm2 = wst.Cells(i, 10).Formula
+                                        LastChar = InStr(1, ACEForm2, ")*G", vbTextCompare)
+                                        ACEFormTemp = ACEForm1 & " + " & Mid(ACEForm2, InStr(1, ACEForm2, "(") + 1, LastChar - InStr(1, ACEForm2, "("))
+                                        wst.Cells(l, 10).Formula = ACEFormTemp
+                                        wst.Cells(i, 10).Formula = ACEForm2 & "*0"
+                                        
+                                        PMEForm1 = wst.Cells(l, 9).Formula
+                                        PMEForm2 = wst.Cells(i, 9).Formula
+                                        LastChar = InStr(1, PMEForm2, ")*G", vbTextCompare)
+                                        PMEFormTemp = PMEForm1 & " + " & Mid(PMEForm2, InStr(1, PMEForm2, "(") + 1, LastChar - InStr(1, PMEForm2, "("))
+                                        wst.Cells(l, 9).Formula = PMEFormTemp
+                                        wst.Cells(i, 9).Formula = PMEForm2 & "*0"
+                                        
+                                        wst.Cells(l, 13).Value = 1
+                                        wst.Cells(i, 13).Value = 1
+                                        
+                                        Exit For
+                                    End If
+                                Next l
+                            End If
+                        Next k
+                    End If
+                Next j
+            End If
+        
+        End If 'End If GEP
+        
+'        If wst.Cells(i, 10).Value = 0 And wst.Cells(i, 8).Value <> 0 Then 'If GIC
+'            For j = 2 To lastrowt
+'                If j <> lastrowt Then
+'                    If wst.Cells(j, 8).Value <> 0 And wst.Cells(i, 3).Value = wst.Cells(j, 3).Value And wst.Cells(i, 4).Value = wst.Cells(j, 4).Value And wst.Cells(j, 10).Value <> 0 Then
+'                        CHEForm1 = wst.Cells(j, 8).Formula
+'                        CHEForm2 = wst.Cells(i, 8).Formula
+'                        CHEFormTemp = CHEForm1 & " + " & Mid(CHEForm2, 2, Len(CHEForm2))
+'                        wst.Cells(j, 8).Formula = CHEFormTemp
+'                        wst.Cells(i, 8).Formula = CHEForm2 & "*0"
+'
+'                        wst.Cells(j, 11).Value = 1
+'                        wst.Cells(i, 11).Value = 1
+'
+'                        Exit For
+'                    End If
+'                ElseIf j = lastrowt Then
+'                    For k = 2 To lastrowt
+'                        If k <> lastrowt Then
+'                            If wst.Cells(k, 8).Value <> 0 And wst.Cells(i, 3).Value = wst.Cells(k, 3).Value And wst.Cells(k, 10).Value <> 0 Then
+'                                CHEForm1 = wst.Cells(k, 8).Formula
+'                                CHEForm2 = wst.Cells(i, 8).Formula
+'                                CHEFormTemp = CHEForm1 & " + " & Mid(CHEForm2, 2, Len(CHEForm2))
+'                                wst.Cells(k, 8).Formula = CHEFormTemp
+'                                wst.Cells(i, 8).Formula = CHEForm2 & "*0"
+'
+'                                wst.Cells(k, 11).Value = 1
+'                                wst.Cells(i, 11).Value = 1
+'
+'                                Exit For
+'                            End If
+'                        ElseIf k = lastrowt Then
+'                            For l = 2 To lastrowt
+'                                If wst.Cells(l, 8).Value <> 0 And wst.Cells(l, 10).Value <> 0 Then
+'                                    CHEForm1 = wst.Cells(l, 8).Formula
+'                                    CHEForm2 = wst.Cells(i, 8).Formula
+'                                    CHEFormTemp = CHEForm1 & " + " & Mid(CHEForm2, 2, Len(CHEForm2))
+'                                    wst.Cells(l, 8).Formula = CHEFormTemp
+'                                    wst.Cells(i, 8).Formula = CHEForm2 & "*0"
+'
+'                                    wst.Cells(l, 11).Value = 1
+'                                    wst.Cells(i, 11).Value = 1
+'
+'                                    Exit For
+'                                End If
+'                            Next l
+'                        End If
+'                    Next k
+'                End If
+'            Next j
+'        End If 'End If GIC
+'
+    Next i
+    
+    lastrows = wss.Cells(Rows.Count, "A").End(xlUp).Row
+    lastcols = wss.Cells(1, wss.Columns.Count).End(xlToLeft).Column
+    
+    With wss.UsedRange
+        .AutoFilter Field:=15, Criteria1:=0
+        .AutoFilter Field:=8, Criteria1:="<>", Operator:=xlAnd, Criteria2:="<>0"
+    End With
+    
+    wss.Range("D:D").SpecialCells(xlCellTypeVisible).Copy
+    wsn.Range("A1").PasteSpecial Paste:=xlPasteValues
+    wss.Range("L:L").SpecialCells(xlCellTypeVisible).Copy
+    wsn.Range("B1").PasteSpecial Paste:=xlPasteValues
+    wss.Range("M:M").SpecialCells(xlCellTypeVisible).Copy
+    wsn.Range("C1").PasteSpecial Paste:=xlPasteValues
+    wss.Range("F:F").SpecialCells(xlCellTypeVisible).Copy
+    wsn.Range("D1").PasteSpecial Paste:=xlPasteValues
+    wss.Range("N:N").SpecialCells(xlCellTypeVisible).Copy
+    wsn.Range("E1").PasteSpecial Paste:=xlPasteValues
+    
+    wss.UsedRange.AutoFilter
+    
+    With wss.UsedRange
+        .AutoFilter Field:=15, Criteria1:=0
+        .AutoFilter Field:=9, Criteria1:="<>", Operator:=xlAnd, Criteria2:="<>0"
+    End With
+    
+    lastrown = wsn.Cells(Rows.Count, "A").End(xlUp).Row
+    
+    wss.Range("D2:D1048576").SpecialCells(xlCellTypeVisible).Copy
+    wsn.Range("A" & (lastrown + 1)).PasteSpecial Paste:=xlPasteValues
+    wss.Range("L2:L1048576").SpecialCells(xlCellTypeVisible).Copy
+    wsn.Range("B" & (lastrown + 1)).PasteSpecial Paste:=xlPasteValues
+    wss.Range("M2:M1048576").SpecialCells(xlCellTypeVisible).Copy
+    wsn.Range("C" & (lastrown + 1)).PasteSpecial Paste:=xlPasteValues
+    wss.Range("F2:F1048576").SpecialCells(xlCellTypeVisible).Copy
+    wsn.Range("D" & (lastrown + 1)).PasteSpecial Paste:=xlPasteValues
+    wss.Range("N2:N1048576").SpecialCells(xlCellTypeVisible).Copy
+    wsn.Range("E" & (lastrown + 1)).PasteSpecial Paste:=xlPasteValues
+    
+    wsn.UsedRange.RemoveDuplicates Columns:=Array(1, 2, 3, 4, 5), Header:=xlYes
+    
+    lastrown = wsn.Cells(Rows.Count, "A").End(xlUp).Row
+    
+    wsn.Range("E2:E" & lastrown).Replace What:="ALL", Replacement:="OTHERS", LookAt:=xlWhole, MatchCase:=False
+    
+    lastrowt = wst.Cells(Rows.Count, "A").End(xlUp).Row
+    wst.Range("M3:M" & lastrowt).Value = 0
+    
+    wsn.Range("A2:E" & lastrown).Copy
+    wst.Range("B" & (lastrowt + 1)).PasteSpecial xlPasteValues
+    wst.Range("M" & (lastrowt + 1) & ":M" & wst.Cells(Rows.Count, "B").End(xlUp).Row).Value = 1
+    wst.Range("A" & (lastrowt + 1) & ":M" & wst.Cells(Rows.Count, "B").End(xlUp).Row).Interior.Color = RGB(192, 192, 192)
+    wst.Range("A" & lastrowt).Copy
+    wst.Range("A" & (lastrowt + 1) & ":A" & wst.Cells(Rows.Count, "B").End(xlUp).Row).PasteSpecial xlPasteFormulas
+    
+    wss.UsedRange.AutoFilter
+    
+    lastrowt = wst.Cells(Rows.Count, "A").End(xlUp).Row
+    wst.Range("H2:L2").Copy
+    wst.Range("H" & (lastrowtprior + 1) & ":L" & lastrowt).PasteSpecial xlPasteFormulas
+
+    For i = (lastrowtprior + 1) To lastrowt
+        For j = 2 To lastrowtprior
+            If j <> lastrowtprior Then
+                If (wst.Cells(j, 10).Value) <> 0 And wst.Cells(j, 9).Value <> 0 And wst.Cells(i, 4).Value = wst.Cells(j, 4).Value And wst.Cells(i, 5).Value = wst.Cells(j, 5).Value And wst.Cells(j, 8).Value <> 0 Then
+                    ACEForm1 = wst.Cells(j, 10).Formula
+                    ACEForm2 = wst.Cells(i, 10).Formula
+                    LastChar = InStr(1, ACEForm2, ")*G", vbTextCompare)
+                    ACEFormTemp = ACEForm1 & " + " & Mid(ACEForm2, InStr(1, ACEForm2, "(") + 1, LastChar - InStr(1, ACEForm2, "("))
+                    wst.Cells(j, 10).Formula = ACEFormTemp
+                    wst.Cells(i, 10).Formula = ACEForm2 & "*0"
+                    Debug.Print Mid(ACEForm2, InStr(1, ACEForm2, "(") + 1, LastChar - InStr(1, ACEForm2, "("))
+                    PMEForm1 = wst.Cells(j, 9).Formula
+                    PMEForm2 = wst.Cells(i, 9).Formula
+                    LastChar = InStr(1, PMEForm2, ")*G", vbTextCompare)
+                    PMEFormTemp = PMEForm1 & " + " & Mid(PMEForm2, InStr(1, PMEForm2, "(") + 1, LastChar - InStr(1, PMEForm2, "("))
+                    wst.Cells(j, 9).Formula = PMEFormTemp
+                    wst.Cells(i, 9).Formula = PMEForm2 & "*0"
+
+                    wst.Cells(j, 13).Value = 1
+                    wst.Cells(i, 13).Value = 1
+
+                    Exit For
+                End If
+            ElseIf j = lastrowtprior Then
+                For k = 2 To lastrowtprior
+                    If k <> lastrowtprior Then
+                        If (wst.Cells(k, 10).Value) <> 0 And wst.Cells(k, 9).Value <> 0 And wst.Cells(i, 4).Value = wst.Cells(k, 4).Value And wst.Cells(k, 8).Value <> 0 Then
+                            ACEForm1 = wst.Cells(k, 10).Formula
+                            ACEForm2 = wst.Cells(i, 10).Formula
+                            LastChar = InStr(1, ACEForm2, ")*G", vbTextCompare)
+                            ACEFormTemp = ACEForm1 & " + " & Mid(ACEForm2, InStr(1, ACEForm2, "(") + 1, LastChar - InStr(1, ACEForm2, "("))
+                            Debug.Print ACEFormTemp
+                            wst.Cells(k, 10).Formula = ACEFormTemp
+                            wst.Cells(i, 10).Formula = ACEForm2 & "*0"
+                            'Debug.Print Mid(ACEForm2, InStr(1, ACEForm2, "(") + 1, LastChar - InStr(1, ACEForm2, "(") ))
+                            PMEForm1 = wst.Cells(k, 9).Formula
+                            PMEForm2 = wst.Cells(i, 9).Formula
+                            LastChar = InStr(1, PMEForm2, ")*G", vbTextCompare)
+                            PMEFormTemp = PMEForm1 & " + " & Mid(PMEForm2, InStr(1, PMEForm2, "(") + 1, LastChar - InStr(1, PMEForm2, "("))
+                            wst.Cells(k, 9).Formula = PMEFormTemp
+                            wst.Cells(i, 9).Formula = PMEForm2 & "*0"
+
+                            wst.Cells(k, 13).Value = 1
+                            wst.Cells(i, 13).Value = 1
+
+                            Exit For
+                        End If
+                    ElseIf k = lastrowtprior Then
+                        For l = 2 To lastrowtprior
+                            If (wst.Cells(l, 10).Value) <> 0 And wst.Cells(l, 9).Value <> 0 And wst.Cells(l, 8).Value <> 0 Then
+                                ACEForm1 = wst.Cells(l, 10).Formula
+                                ACEForm2 = wst.Cells(i, 10).Formula
+                                LastChar = InStr(1, ACEForm2, ")*G", vbTextCompare)
+                                ACEFormTemp = ACEForm1 & " + " & Mid(ACEForm2, InStr(1, ACEForm2, "(") + 1, LastChar - InStr(1, ACEForm2, "("))
+                                Debug.Print Mid(ACEForm2, InStr(1, ACEForm2, "(") + 1, LastChar - InStr(1, ACEForm2, "("))
+                                wst.Cells(l, 10).Formula = ACEFormTemp
+                                wst.Cells(i, 10).Formula = ACEForm2 & "*0"
+
+                                PMEForm1 = wst.Cells(l, 9).Formula
+                                PMEForm2 = wst.Cells(i, 9).Formula
+                                LastChar = InStr(1, PMEForm2, ")*G", vbTextCompare)
+                                PMEFormTemp = PMEForm1 & " + " & Mid(PMEForm2, InStr(1, PMEForm2, "(") + 1, LastChar - InStr(1, PMEForm2, "("))
+                                wst.Cells(l, 9).Formula = PMEFormTemp
+                                wst.Cells(i, 9).Formula = PMEForm2 & "*0"
+
+                                wst.Cells(l, 13).Value = 1
+                                wst.Cells(i, 13).Value = 1
+
+                                Exit For
+                            End If
+                        Next l
+                    End If
+                Next k
+            End If
+        Next j
+
+    Next i
+    
+    
+    End If
+    
+    '08. Actual PME AQE
+    
+    Set wst = ThisWorkbook.Sheets("08. Actual PME AQE")
+    lastrowt = wst.Cells(Rows.Count, "A").End(xlUp).Row
+    lastcolt = wst.Cells(1, wst.Columns.Count).End(xlToLeft).Column
+    
+    wst.Range("P2:Q2").Copy
+    wst.Range("P3:Q" & lastrowt).PasteSpecial xlPasteFormulas
+    
+    '09. GIC Non Salvage
+    
+    If Sheet09 Then
+    Set wst = ThisWorkbook.Sheets("09. GIC Non Salvage")
+    Set wss = ThisWorkbook.Sheets("Summary")
+    
+    Set wbn = Workbooks.Add
+    Set wsn = wbn.Sheets.Add
+    wsn.Name = "09. GIC Non Salvage"
+    
+    lastrowt = wst.Cells(Rows.Count, "A").End(xlUp).Row
+    lastrowtprior = lastrowt
+    MsgBox lastrowtprior
+    wst.Range("G2:H2").Copy
+    wst.Range("G3:H" & lastrowt).PasteSpecial xlPasteFormulas
+    
+    
+    For i = 2 To lastrowt
+        
+        If wst.Cells(i, 7).Value = 0 And wst.Cells(i, 6).Value <> 0 Then 'If GIC
+            For j = 2 To lastrowt
+                If j <> lastrowt Then
+                    If wst.Cells(j, 7).Value <> 0 And wst.Cells(i, 4).Value = wst.Cells(j, 4).Value And wst.Cells(i, 5).Value = wst.Cells(j, 5).Value And wst.Cells(j, 6).Value <> 0 Then
+                        CHEForm1 = wst.Cells(j, 7).Formula
+                        CHEForm2 = wst.Cells(i, 7).Formula
+                        CHEFormTemp = CHEForm1 & " + " & Mid(CHEForm2, 2, Len(CHEForm2))
+                        wst.Cells(j, 7).Formula = CHEFormTemp
+                        wst.Cells(i, 7).Formula = CHEForm2 & "*0"
+
+                        wst.Cells(j, 8).Value = 1
+                        wst.Cells(i, 8).Value = 1
+
+                        Exit For
+                    End If
+                ElseIf j = lastrowt Then
+                    For k = 2 To lastrowt
+                        If k <> lastrowt Then
+                            If wst.Cells(k, 7).Value <> 0 And wst.Cells(i, 4).Value = wst.Cells(k, 4).Value And wst.Cells(k, 6).Value <> 0 Then
+                                CHEForm1 = wst.Cells(k, 7).Formula
+                                CHEForm2 = wst.Cells(i, 7).Formula
+                                CHEFormTemp = CHEForm1 & " + " & Mid(CHEForm2, 2, Len(CHEForm2))
+                                wst.Cells(k, 7).Formula = CHEFormTemp
+                                wst.Cells(i, 7).Formula = CHEForm2 & "*0"
+
+                                wst.Cells(k, 8).Value = 1
+                                wst.Cells(i, 8).Value = 1
+
+                                Exit For
+                            End If
+                        ElseIf k = lastrowt Then
+                            For l = 2 To lastrowt
+                                If wst.Cells(l, 7).Value <> 0 And wst.Cells(l, 6).Value <> 0 Then
+                                    CHEForm1 = wst.Cells(l, 7).Formula
+                                    CHEForm2 = wst.Cells(i, 7).Formula
+                                    CHEFormTemp = CHEForm1 & " + " & Mid(CHEForm2, 2, Len(CHEForm2))
+                                    wst.Cells(l, 7).Formula = CHEFormTemp
+                                    wst.Cells(i, 7).Formula = CHEForm2 & "*0"
+
+                                    wst.Cells(l, 8).Value = 1
+                                    wst.Cells(i, 8).Value = 1
+
+                                    Exit For
+                                End If
+                            Next l
+                        End If
+                    Next k
+                End If
+            Next j
+        End If 'End If GIC
+
+    Next i
+    
+    lastrows = wss.Cells(Rows.Count, "A").End(xlUp).Row
+    lastcols = wss.Cells(1, wss.Columns.Count).End(xlToLeft).Column
+    
+    With wss.UsedRange
+        .AutoFilter Field:=16, Criteria1:=0
+        .AutoFilter Field:=10, Criteria1:="<>", Operator:=xlAnd, Criteria2:="<>0"
+    End With
+    
+    wss.Range("D:D").SpecialCells(xlCellTypeVisible).Copy
+    wsn.Range("A1").PasteSpecial Paste:=xlPasteValues
+    wss.Range("L:L").SpecialCells(xlCellTypeVisible).Copy
+    wsn.Range("B1").PasteSpecial Paste:=xlPasteValues
+    wss.Range("M:M").SpecialCells(xlCellTypeVisible).Copy
+    wsn.Range("C1").PasteSpecial Paste:=xlPasteValues
+    wss.Range("F:F").SpecialCells(xlCellTypeVisible).Copy
+    wsn.Range("D1").PasteSpecial Paste:=xlPasteValues
+
+    'wss.UsedRange.AutoFilter
+    
+    wsn.UsedRange.RemoveDuplicates Columns:=Array(1, 2, 3, 4), Header:=xlYes
+    
+    lastrown = wsn.Cells(Rows.Count, "A").End(xlUp).Row
+    
+    'wsn.Range("E2:E" & lastrown).Replace What:="ALL", Replacement:="OTHERS", LookAt:=xlWhole, MatchCase:=False
+    
+    lastrowt = wst.Cells(Rows.Count, "A").End(xlUp).Row
+    wst.Range("H3:H" & lastrowt).Value = 0
+    
+    wsn.Range("A2:D" & lastrown).Copy
+    wst.Range("B" & (lastrowt + 1)).PasteSpecial xlPasteValues
+    wst.Range("H" & (lastrowt + 1) & ":H" & wst.Cells(Rows.Count, "B").End(xlUp).Row).Value = 1
+    wst.Range("A" & (lastrowt + 1) & ":H" & wst.Cells(Rows.Count, "B").End(xlUp).Row).Interior.Color = RGB(192, 192, 192)
+    wst.Range("A" & lastrowt).Copy
+    wst.Range("A" & (lastrowt + 1) & ":A" & wst.Cells(Rows.Count, "B").End(xlUp).Row).PasteSpecial xlPasteFormulas
+    
+    wss.UsedRange.AutoFilter
+    
+    lastrowt = wst.Cells(Rows.Count, "A").End(xlUp).Row
+    wst.Range("G2").Copy
+    wst.Range("G" & (lastrowtprior + 1) & ":G" & lastrowt).PasteSpecial xlPasteFormulas
+
+    For i = (lastrowtprior + 1) To lastrowt
+        
+        For j = 2 To lastrowtprior
+            If j <> lastrowtprior Then
+                If wst.Cells(j, 7).Value <> 0 And wst.Cells(i, 4).Value = wst.Cells(j, 4).Value And wst.Cells(i, 5).Value = wst.Cells(j, 5).Value And wst.Cells(j, 6).Value <> 0 Then
+                    CHEForm1 = wst.Cells(j, 7).Formula
+                    CHEForm2 = wst.Cells(i, 7).Formula
+                    CHEFormTemp = CHEForm1 & " + " & Mid(CHEForm2, 2, Len(CHEForm2))
+                    wst.Cells(j, 7).Formula = CHEFormTemp
+                    wst.Cells(i, 7).Formula = CHEForm2 & "*0"
+
+                    wst.Cells(j, 8).Value = 1
+                    wst.Cells(i, 8).Value = 1
+
+                    Exit For
+                End If
+            ElseIf j = lastrowtprior Then
+                For k = 2 To lastrowtprior
+                    If k <> lastrowtprior Then
+                        If wst.Cells(k, 7).Value <> 0 And wst.Cells(i, 4).Value = wst.Cells(k, 4).Value And wst.Cells(k, 6).Value <> 0 Then
+                            CHEForm1 = wst.Cells(k, 7).Formula
+                            CHEForm2 = wst.Cells(i, 7).Formula
+                            CHEFormTemp = CHEForm1 & " + " & Mid(CHEForm2, 2, Len(CHEForm2))
+                            wst.Cells(k, 7).Formula = CHEFormTemp
+                            wst.Cells(i, 7).Formula = CHEForm2 & "*0"
+
+                            wst.Cells(k, 8).Value = 1
+                            wst.Cells(i, 8).Value = 1
+
+                            Exit For
+                        End If
+                    ElseIf k = lastrowtprior Then
+                        For l = 2 To lastrowtprior
+                            If wst.Cells(l, 7).Value <> 0 And wst.Cells(l, 6).Value <> 0 Then
+                                CHEForm1 = wst.Cells(l, 7).Formula
+                                CHEForm2 = wst.Cells(i, 7).Formula
+                                CHEFormTemp = CHEForm1 & " + " & Mid(CHEForm2, 2, Len(CHEForm2))
+                                wst.Cells(l, 7).Formula = CHEFormTemp
+                                wst.Cells(i, 7).Formula = CHEForm2 & "*0"
+
+                                wst.Cells(l, 8).Value = 1
+                                wst.Cells(i, 8).Value = 1
+
+                                Exit For
+                            End If
+                        Next l
+                    End If
+                Next k
+            End If
+        Next j
+
+    Next i
+    
+    
+    End If
+    
+    '10. Actual CHE
+    
+    Set wst = ThisWorkbook.Sheets("10. Actual CHE")
+    lastrowt = wst.Cells(Rows.Count, "A").End(xlUp).Row
+    lastcolt = wst.Cells(1, wst.Columns.Count).End(xlToLeft).Column
+    
+    wst.Range("R2").Copy
+    wst.Range("R3:R" & lastrowt).PasteSpecial xlPasteFormulas
+    
+    Beep
+    MsgBox "Done"
+    
+End Sub
+
