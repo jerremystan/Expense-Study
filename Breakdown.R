@@ -3,7 +3,7 @@ library(readxl)
 library(tidyr)
 library(writexl)
 
-ifg_df <- read_excel("variable_all_runs_2023_202312.v.2.xlsx", sheet = "variable_all_runs")
+ifg_df <- read_excel("variable_all_runs.v.2.xlsx", sheet = "variable_all_runs")
 
 ifrs_group <- data.frame(col1 = unique(ifg_df$ifrs_group_code))
 
